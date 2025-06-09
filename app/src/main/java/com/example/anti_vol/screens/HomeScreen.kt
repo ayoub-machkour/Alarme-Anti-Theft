@@ -41,7 +41,6 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Title (big text = 32sp)
             Text(
                 text = "Alarm Anti theft",
                 fontSize = 32.sp,

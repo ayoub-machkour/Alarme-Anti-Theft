@@ -154,9 +154,9 @@ fun PinSetupScreen(navController: NavController) {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(40.dp)
                         ) {
-                            Spacer(modifier = Modifier.size(80.dp)) // Empty space
+                            Spacer(modifier = Modifier.size(80.dp))
                             PinButton("0") { if (pinCode.length < 4) pinCode += "0" }
-                            PinButton("⌫") { // Backspace symbol
+                            PinButton("⌫") {
                                 if (pinCode.isNotEmpty()) {
                                     pinCode = pinCode.dropLast(1)
                                 }
@@ -167,10 +167,11 @@ fun PinSetupScreen(navController: NavController) {
             }
         }
 
-        // Handle PIN completion
+        // Handle PIN completion - Navigate to permissions screen
         LaunchedEffect(pinCode) {
             if (pinCode.length == 4) {
                 kotlinx.coroutines.delay(500)
+                navController.navigate("permissions")
             }
         }
     }

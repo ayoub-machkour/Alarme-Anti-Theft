@@ -4,7 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.anti_vol.screens.EmergencyContactScreen
 import com.example.anti_vol.screens.HomeScreen
+import com.example.anti_vol.screens.PermissionsScreen
 import com.example.anti_vol.screens.onboarding.IntroductionScreen1
 import com.example.anti_vol.screens.onboarding.IntroductionScreen2
 import com.example.anti_vol.screens.onboarding.IntroductionScreen3
@@ -32,6 +34,12 @@ fun MainNavigation() {
         }
         composable("pin_setup") {
             PinSetupScreen(navController)
+        }
+        composable("permissions") {
+            PermissionsScreen(navController)
+        }
+        composable("emergency_contact") {
+            EmergencyContactScreen(navController)
         }
     }
 }
