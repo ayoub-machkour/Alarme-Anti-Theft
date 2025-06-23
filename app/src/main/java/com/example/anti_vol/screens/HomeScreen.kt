@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -15,10 +16,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.anti_vol.R
+import com.example.anti_vol.data.PreferencesManager
 import com.example.anti_vol.ui.theme.AppColors
 
 @Composable
 fun HomeScreen(navController: NavController) {
+    val context = LocalContext.current
+    val preferencesManager = remember { PreferencesManager.getInstance(context) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -51,8 +56,15 @@ fun HomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Message différent selon le statut
+            val welcomeMessage = if (preferencesManager.isSetupComplete()) {
+                "Welcome back!"
+            } else {
+                "Keep your phone safe from nosy people and thieves"
+            }
+
             Text(
-                text = "Keep you phone safe from nosy people and thieves",
+                text = welcomeMessage,
                 fontSize = 13.sp,
                 color = AppColors.White.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center,
@@ -60,10 +72,20 @@ fun HomeScreen(navController: NavController) {
             )
         }
 
-        // Auto-navigate to next screen after 2 seconds
+        // Navigation intelligente après 2 secondes
         LaunchedEffect(Unit) {
             kotlinx.coroutines.delay(2000)
-            navController.navigate("intro1")
+
+            // Vérifier le statut de configuration
+            if (preferencesManager.isSetupComplete()) {
+                // Setup déjà fait → Aller directement à Detection
+                navController.navigate("detection") {
+                    popUpTo("home") { inclusive = true }
+                }
+            } else {
+                // Première utilisation → Flow normal
+                navController.navigate("intro1")
+            }
         }
     }
 }

@@ -35,12 +35,7 @@ fun PermissionsScreen(navController: NavController) {
                     PermissionChecker.PERMISSION_GRANTED
         )
     }
-    var smsGranted by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) ==
-                    PermissionChecker.PERMISSION_GRANTED
-        )
-    }
+
     var locationGranted by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
@@ -55,11 +50,7 @@ fun PermissionsScreen(navController: NavController) {
         cameraGranted = isGranted
     }
 
-    val smsLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        smsGranted = isGranted
-    }
+
 
     val locationLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -114,15 +105,7 @@ fun PermissionsScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            PermissionItem(
-                title = "Send SMS messages",
-                isGranted = smsGranted,
-                onClick = {
-                    if (!smsGranted) {
-                        smsLauncher.launch(Manifest.permission.SEND_SMS)
-                    }
-                }
-            )
+
 
             Spacer(modifier = Modifier.height(20.dp))
 

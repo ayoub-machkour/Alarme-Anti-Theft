@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -19,15 +20,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.anti_vol.data.models.EmergencyContact
+import com.example.anti_vol.managers.AntiTheftManager
 import com.example.anti_vol.ui.theme.AppColors
 
 @Composable
-fun EmergencyContactScreen(navController: NavController) {
-    var phoneNumber by remember { mutableStateOf("+33") }
-    var contactName by remember { mutableStateOf("") }
-    var selectedMethod by remember { mutableStateOf("SMS") }
-    var showPhoneError by remember { mutableStateOf(false) }
+fun EmergencyContactScreen(
+    navController: NavController,
+    fromSettings: Boolean = false) {
+
+    val context = LocalContext.current
+    val antiTheftManager = remember { AntiTheftManager.getInstance(context) }
+
+    // Charger les données existantes
+    val existingContact = remember { antiTheftManager.getEmergencyContact() }
+
+    var contactName by remember { mutableStateOf(existingContact.name) }
+    var chatId by remember { mutableStateOf(existingContact.telegramChatId) }
     var showNameError by remember { mutableStateOf(false) }
+    var showChatIdError by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -43,7 +54,7 @@ fun EmergencyContactScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(
-                text = "Contact d'urgence",
+                text = "Emergency Contact",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 color = AppColors.White,
@@ -53,7 +64,7 @@ fun EmergencyContactScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "If a theft is detected, we will immediately send a photo alert to this contact",
+                text = "If a theft is detected, we will immediately send a photo alert via Telegram to this contact",
                 fontSize = 16.sp,
                 color = AppColors.White.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center,
@@ -61,69 +72,6 @@ fun EmergencyContactScreen(navController: NavController) {
             )
 
             Spacer(modifier = Modifier.height(40.dp))
-
-            // Phone number section
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
-                Text(
-                    text = "phone number",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = AppColors.White,
-                    modifier = Modifier.padding(bottom = 8.dp)
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .background(
-                            color = Color(0xFFB8A9E8),
-                            shape = RoundedCornerShape(16.dp)
-                        )
-                        .padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "🇫🇷",
-                        fontSize = 20.sp,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-
-                    BasicTextField(
-                        value = phoneNumber,
-                        onValueChange = { newValue ->
-                            if (newValue.startsWith("+33") && newValue.length <= 12) {
-                                val afterPrefix = newValue.substring(3)
-                                if (afterPrefix.all { it.isDigit() }) {
-                                    phoneNumber = newValue
-                                    showPhoneError = false
-                                }
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        textStyle = TextStyle(
-                            fontSize = 16.sp,
-                            color = Color.Black
-                        ),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-
-                if (showPhoneError) {
-                    Text(
-                        text = "Phone number must be exactly 9 digits after +33",
-                        fontSize = 12.sp,
-                        color = AppColors.NoteRed,
-                        modifier = Modifier.padding(top = 4.dp)
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
 
             // Contact name section
             Column(
@@ -136,13 +84,13 @@ fun EmergencyContactScreen(navController: NavController) {
                     verticalAlignment = Alignment.Bottom
                 ) {
                     Text(
-                        text = "contact name",
+                        text = "Contact Name",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         color = AppColors.White
                     )
                     Text(
-                        text = "${contactName.length}/18",
+                        text = "${contactName.length}/20",
                         fontSize = 12.sp,
                         color = AppColors.White.copy(alpha = 0.6f)
                     )
@@ -153,7 +101,7 @@ fun EmergencyContactScreen(navController: NavController) {
                 BasicTextField(
                     value = contactName,
                     onValueChange = { newValue ->
-                        if (newValue.length <= 18 && !newValue.contains('\n')) {
+                        if (newValue.length <= 20 && !newValue.contains('\n')) {
                             contactName = newValue
                             showNameError = false
                         }
@@ -175,7 +123,7 @@ fun EmergencyContactScreen(navController: NavController) {
 
                 if (showNameError) {
                     Text(
-                        text = "Contact name must be 2-18 characters",
+                        text = "Contact name must be 2-20 characters",
                         fontSize = 12.sp,
                         color = AppColors.NoteRed,
                         modifier = Modifier.padding(top = 4.dp)
@@ -183,50 +131,120 @@ fun EmergencyContactScreen(navController: NavController) {
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
+            // Telegram Chat ID section
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.Start
             ) {
                 Text(
-                    text = "Sending method",
+                    text = "Telegram Chat ID",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = AppColors.White,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                BasicTextField(
+                    value = chatId,
+                    onValueChange = { newValue ->
+                        if (newValue.isEmpty() || (newValue.matches(Regex("^-?\\d+$")) && newValue.length <= 15)) {
+                            chatId = newValue
+                            showChatIdError = false
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    textStyle = TextStyle(
+                        fontSize = 16.sp,
+                        color = Color.Black
+                    ),
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .background(
+                            color = Color(0xFFB8A9E8),
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 16.dp)
+                )
+
+                if (showChatIdError) {
+                    Text(
+                        text = "Please enter a valid Telegram Chat ID",
+                        fontSize = 12.sp,
+                        color = AppColors.NoteRed,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+
+                // Helper text for Chat ID
+                Text(
+                    text = "To get your Chat ID: Start @userinfobot on Telegram",
+                    fontSize = 14.sp,
+                    color = AppColors.White.copy(alpha = 0.7f),
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Sending method - Only Telegram
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.Start
+            ) {
+                Text(
+                    text = "Sending Method",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Medium,
                     color = AppColors.White,
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                // Telegram button
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(color = Color(0xFF229ED9)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    SendingMethodButton(
-                        text = "SMS",
-                        isSelected = selectedMethod == "SMS",
-                        onClick = { selectedMethod = "SMS" }
-                    )
-
-                    SendingMethodButton(
-                        text = "WhatsApp",
-                        isSelected = selectedMethod == "WhatsApp",
-                        onClick = { selectedMethod = "WhatsApp" }
+                    Text(
+                        text = "Telegram",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AppColors.White
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.weight(1f))
 
             // Next button
             Button(
                 onClick = {
-                    val phoneValid = phoneNumber.length == 12 && phoneNumber.startsWith("+33")
-                    val nameValid = contactName.trim().length >= 2 && contactName.length <= 18
+                    val contact = EmergencyContact(
+                        name = contactName.trim(),
+                        telegramChatId = chatId.trim()
+                    )
 
-                    showPhoneError = !phoneValid
-                    showNameError = !nameValid
+                    val validatedContact = contact.validate()
+                    showNameError = contactName.trim().length < 2 || contactName.length > 20
+                    showChatIdError = !validatedContact.isValid
 
-                    if (phoneValid && nameValid) {
-                        // Navigate to next screen
+                    if (validatedContact.isValid) {
+                        val saved = antiTheftManager.saveEmergencyContact(validatedContact)
+
+                        if (saved) {
+                            if (fromSettings) {
+                                navController.navigate("settings")
+                            } else {
+                                navController.navigate("alarm_selection")
+                            }
+                        }
                     }
                 },
                 modifier = Modifier
@@ -244,45 +262,8 @@ fun EmergencyContactScreen(navController: NavController) {
                     fontWeight = FontWeight.Bold
                 )
             }
-        }
-    }
-}
 
-@Composable
-fun SendingMethodButton(
-    text: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    val backgroundColor = when {
-        isSelected && text == "WhatsApp" -> Color(0xFF25D366)
-        isSelected && text == "SMS" -> Color(0xFF007AFF)
-        else -> Color(0xFF6A6A6A)
-    }
-
-    Box(
-        modifier = Modifier
-            .width(140.dp)
-            .height(56.dp)
-            .clip(RoundedCornerShape(28.dp))
-            .background(color = backgroundColor)
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = if (text == "WhatsApp") "📱" else "💬",
-                fontSize = 16.sp
-            )
-            Text(
-                text = text,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium,
-                color = AppColors.White
-            )
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }

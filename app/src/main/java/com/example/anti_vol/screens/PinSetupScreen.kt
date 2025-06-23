@@ -11,15 +11,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.anti_vol.managers.AntiTheftManager
 import com.example.anti_vol.ui.theme.AppColors
 
 @Composable
-fun PinSetupScreen(navController: NavController) {
+fun PinSetupScreen(navController: NavController,
+                   fromSettings: Boolean = false) {
+
+    val context = LocalContext.current
+    val antiTheftManager = remember { AntiTheftManager.getInstance(context) }
+
     var pinCode by remember { mutableStateOf("") }
 
     Box(
@@ -167,11 +174,18 @@ fun PinSetupScreen(navController: NavController) {
             }
         }
 
-        // Handle PIN completion - Navigate to permissions screen
+        // Handle PIN completion
         LaunchedEffect(pinCode) {
             if (pinCode.length == 4) {
+                // 🔥 SAUVEGARDER LE PIN AVEC LE BACKEND
+                antiTheftManager.savePinCode(pinCode)
+
                 kotlinx.coroutines.delay(500)
-                navController.navigate("permissions")
+                if (fromSettings) {
+                    navController.navigate("settings")
+                } else {
+                    navController.navigate("permissions")
+                }
             }
         }
     }
